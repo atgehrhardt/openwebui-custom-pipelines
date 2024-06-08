@@ -14,7 +14,9 @@ class Pipeline(FunctionCallingBlueprint):
         def __init__(self, pipeline) -> None:
             self.pipeline = pipeline
 
-        def get_current_time() -> str:
+        def get_current_time(
+            self,
+        ) -> str:
             """
             Get the current time in the system's local timezone.
 
