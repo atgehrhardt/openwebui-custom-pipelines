@@ -3,12 +3,8 @@ import requests
 from typing import Literal, List, Optional
 from datetime import datetime
 import pytz
-from geopy.geocoders import Nominatim
-from timezonefinder import TimezoneFinder
-
 
 from blueprints.function_calling_blueprint import Pipeline as FunctionCallingBlueprint
-
 
 class Pipeline(FunctionCallingBlueprint):
     class Valves(FunctionCallingBlueprint.Valves):
@@ -19,38 +15,15 @@ class Pipeline(FunctionCallingBlueprint):
         def __init__(self, pipeline) -> None:
             self.pipeline = pipeline
 
-        def get_location(self) -> dict:
-            """
-            Get the current geographical location using the IP address.
-
-            :return: A dictionary with latitude and longitude.
-            """
-            response = requests.get('https://ipinfo.io')
-            data = response.json()
-            location = data['loc'].split(',')
-            return {'latitude': location[0], 'longitude': location[1]}
-
         def get_current_time(self) -> str:
             """
-            Get the current local time based on location.
+            Get the current time in EST.
 
-            :return: The current local time.
+            :return: The current time in EST.
             """
-            location = self.get_location()
-            latitude = float(location['latitude'])
-            longitude = float(location['longitude'])
-
-            geolocator = Nominatim(user_agent="geoapiExercises")
-            timezone_finder = TimezoneFinder()
-
-            timezone_str = timezone_finder.timezone_at(lat=latitude, lng=longitude)
-            if timezone_str:
-                timezone = pytz.timezone(timezone_str)
-                now = datetime.now(timezone)
-                current_time = now.strftime("%Y-%m-%d %H:%M:%S %Z%z")
-                return f"Current Local Time = {current_time}"
-            else:
-                return "Could not determine the time zone."
+            now_est = datetime.now(pytz.timezone('US/Eastern'))  # Get the current time in EST
+            current_time = now_est.strftime("%H:%M:%S %Z%z")
+            return f"Current Time = {current_time}"
 
         def calculator(self, equation: str) -> str:
             """
@@ -58,9 +31,6 @@ class Pipeline(FunctionCallingBlueprint):
 
             :param equation: The equation to calculate.
             """
-
-            # Avoid using eval in production code
-            # https://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
             try:
                 result = eval(equation)
                 return f"{equation} = {result}"
