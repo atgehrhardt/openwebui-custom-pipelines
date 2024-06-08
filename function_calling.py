@@ -18,14 +18,16 @@ class Pipeline(FunctionCallingBlueprint):
             self,
         ) -> str:
             """
-            Get the current time.
+            Get the current time in the system's local timezone.
 
-            :return: The current time.
+            :return: The current time in the local timezone.
             """
-
-            now = datetime.now()
+            now = datetime.now()  # Get the current local time
+            is_dst = time.localtime().tm_isdst > 0  # Check if daylight saving time is in effect
+            offset_seconds = time.altzone if is_dst else time.timezone  # Get the timezone offset in seconds
+            offset_hours = -offset_seconds // 3600  # Convert offset to hours
             current_time = now.strftime("%H:%M:%S")
-            return f"Current Time = {current_time}"
+            return f"Current Time (UTC{offset_hours:+03d}:00) = {current_time}"
 
         def calculator(self, equation: str) -> str:
             """
