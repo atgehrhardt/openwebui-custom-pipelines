@@ -8,8 +8,7 @@ from blueprints.function_calling_blueprint import Pipeline as FunctionCallingBlu
 
 class Pipeline(FunctionCallingBlueprint):
     class Valves(FunctionCallingBlueprint.Valves):
-        HOME_ASSISTANT_URL: str = ""
-        HOME_ASSISTANT_TOKEN: str = ""
+        # Add your custom parameters here
         pass
 
     class Tools:
@@ -26,81 +25,18 @@ class Pipeline(FunctionCallingBlueprint):
             current_time = now_est.strftime("%H:%M:%S %Z%z")
             return f"Current Time = {current_time}"
 
-        def get_all_lights(self) -> Dict[str, str]:
+        def calculator(self, equation: str) -> str:
             """
-            Fetch all light entities from Home Assistant.
+            Calculate the result of an equation.
 
-            :return: A dictionary of light entity names and their IDs.
+            :param equation: The equation to calculate.
             """
-            if self.pipeline.valves.HOME_ASSISTANT_URL == "" or self.pipeline.valves.HOME_ASSISTANT_TOKEN == "":
-                return "Home Assistant URL or token not set, ask the user to set it up."
-            else:
-                url = f"{self.pipeline.valves.HOME_ASSISTANT_URL}/api/states"
-                headers = {
-                    "Authorization": f"Bearer {self.pipeline.valves.HOME_ASSISTANT_TOKEN}",
-                    "Content-Type": "application/json",
-                }
-
-                response = requests.get(url, headers=headers)
-                response.raise_for_status()  # Raises an HTTPError for bad responses
-                data = response.json()
-
-                lights = {entity["attributes"]["friendly_name"]: entity["entity_id"]
-                          for entity in data if entity["entity_id"].startswith("light.")}
-
-                return lights
-
-        def turn_light_on(self, light_name: str) -> str:
-            """
-            Turn on a light in Home Assistant by its friendly name.
-
-            :param light_name: The friendly name of the light to turn on.
-            :return: The status of the light after the command.
-            """
-            lights = self.get_all_lights()
-            light_entity_id = lights.get(light_name)
-
-            if not light_entity_id:
-                return f"Light named '{light_name}' not found."
-
-            url = f"{self.pipeline.valves.HOME_ASSISTANT_URL}/api/services/light/turn_on"
-            headers = {
-                "Authorization": f"Bearer {self.pipeline.valves.HOME_ASSISTANT_TOKEN}",
-                "Content-Type": "application/json",
-            }
-            data = {
-                "entity_id": light_entity_id,
-            }
-
-            response = requests.post(url, headers=headers, json=data)
-            response.raise_for_status()  # Raises an HTTPError for bad responses
-            return f"Light '{light_name}' turned on."
-
-        def turn_light_off(self, light_name: str) -> str:
-            """
-            Turn off a light in Home Assistant by its friendly name.
-
-            :param light_name: The friendly name of the light to turn off.
-            :return: The status of the light after the command.
-            """
-            lights = self.get_all_lights()
-            light_entity_id = lights.get(light_name)
-
-            if not light_entity_id:
-                return f"Light named '{light_name}' not found."
-
-            url = f"{self.pipeline.valves.HOME_ASSISTANT_URL}/api/services/light/turn_off"
-            headers = {
-                "Authorization": f"Bearer {self.pipeline.valves.HOME_ASSISTANT_TOKEN}",
-                "Content-Type": "application/json",
-            }
-            data = {
-                "entity_id": light_entity_id,
-            }
-
-            response = requests.post(url, headers=headers, json=data)
-            response.raise_for_status()  # Raises an HTTPError for bad responses
-            return f"Light '{light_name}' turned off."
+            try:
+                result = eval(equation)
+                return f"{equation} = {result}"
+            except Exception as e:
+                print(e)
+                return "Invalid equation"
 
     def __init__(self):
         super().__init__()
@@ -114,8 +50,6 @@ class Pipeline(FunctionCallingBlueprint):
             **{
                 **self.valves.model_dump(),
                 "pipelines": ["*"],  # Connect to all pipelines
-                "HOME_ASSISTANT_URL": os.getenv("HOME_ASSISTANT_URL", ""),
-                "HOME_ASSISTANT_TOKEN": os.getenv("HOME_ASSISTANT_TOKEN", ""),
             },
         )
         self.tools = self.Tools(self)
