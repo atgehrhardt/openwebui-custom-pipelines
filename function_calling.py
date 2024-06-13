@@ -23,7 +23,8 @@ class Pipeline(FunctionCallingBlueprint):
             :return: The current time in EST.
             """
             now_est = datetime.now(pytz.timezone('US/Eastern'))  # Get the current time in EST
-            current_time = now_est.strftime("%H:%M:%S %Z%z")
+            current_time = now_est.strftime("%I:%M %p")  # %I for 12-hour clock, %M for minutes, %p for am/pm
+            print(f"Current Time = {current_time}")
             return f"Current Time = {current_time}"
 
         def get_all_lights(self) -> dict[str, str]:
